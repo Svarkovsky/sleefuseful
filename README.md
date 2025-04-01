@@ -41,10 +41,12 @@ A Python tool to automate replacing standard `math.h` functions with their high-
 
 *   `<files>`:  One or more C source files to process (e.g., `*.c`, `file1.c file2.c`).
 *   `-<precision>`:  Required.  Specifies the precision level for SLEEF functions. Choose one of:
-    *   `-05`: Fastest, least accurate.
-    *   `-10`:
-    *   `-35`:  Good balance between speed and accuracy (recommended).
-    *   `-3500`: Highest accuracy, potentially slower.
+*   ULP (Unit in the Last Place): A measure of accuracy; smaller values indicate greater precision.
+    *   `_u05`:  Maximum precision (0.5 ULP).
+    *   `_u10`:  High precision (1.0 ULP).
+    *   `_u35`:  Medium precision (3.5 ULP).
+    *   `_u3500`: Low precision (3500 ULP), used for "fast" versions (fastsin, fastcos, fastpow).
+*   The absence of `_u3500` for `sqrt` and `atan2` reflects SLEEF limitations: the minimum precision for these functions is 3.5 ULP.
 
 *   `[-sca|-vec|-auto]`:  Optional.  Specifies the type of SLEEF functions to use:
     *   `-sca`: Use scalar SLEEF functions (e.g., `Sleef_sinf_u35`).
