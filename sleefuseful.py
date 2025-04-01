@@ -25,7 +25,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-
+# -tft test
 
 
 import sys
@@ -34,7 +34,7 @@ import re
 from shutil import copyfile
 
 # Версия и информация
-VERSION = "0.1 (test)"
+VERSION = "0.2 (test)"
 PLATFORM = "x86_64 Linux with SSE2 support"
 
 # Справка
@@ -43,18 +43,19 @@ def show_help():
     print(f"Version: {VERSION}")
     print(f"Platform: {PLATFORM}")
     print()
-    print(f"Usage: {sys.argv[0]} <files> -05|-10|-35|-3500 [-sca|-vec|-auto] [-b]")
+    print(f"Usage: {sys.argv[0]} <files> -05|-10|-35|-3500 [-sca|-vec|-auto] [-b] [-fint-to-float|-ftf]")
     print("Options:")
     print("  -05, -10, -35, -3500  Set precision level for SLEEF functions")
     print("  -sca                  Use scalar SLEEF functions (e.g., Sleef_sinf_u35)")
     print("  -vec                  Use vector SLEEF functions (e.g., Sleef_sinf4_u35)")
     print("  -auto                 Auto-detect scalar or vector code per line (default)")
     print("  -b                    Create backup files with .sleefuseful suffix")
+    print("  -fint-to-float, -ftf  Convert double math functions to float before SLEEF replacement")
     print("  -help                 Show this help message")
     print("  -version              Show version information")
     print()
     print("Example:")
-    print(f"  {sys.argv[0]} *.c -35 -sca -b")
+    print(f"  {sys.argv[0]} *.c -3500 -ftf -b")
     sys.exit(0)
 
 # Версия
@@ -75,7 +76,7 @@ elif sys.argv[1] == "-version":
     show_version()
 
 if len(sys.argv) < 3:
-    print(f"Usage: {sys.argv[0]} <files> -05|-10|-35|-3500 [-sca|-vec|-auto] [-b]")
+    print(f"Usage: {sys.argv[0]} <files> -05|-10|-35|-3500 [-sca|-vec|-auto] [-b] [-fint-to-float|-ftf]")
     print(f"Use '{sys.argv[0]} -help' for more information")
     sys.exit(1)
 
@@ -87,9 +88,10 @@ if precision not in ["-05", "-10", "-35", "-3500"]:
 precision = precision.lstrip("-")
 precision = f"_u{precision}"
 
-# Определение режима
+# Определение режима и опций
 mode = "auto"
 backup = False
+floatize = False
 for arg in sys.argv[3:]:
     if arg == "-sca":
         mode = "sca"
@@ -99,8 +101,10 @@ for arg in sys.argv[3:]:
         mode = "auto"
     elif arg == "-b":
         backup = True
+    elif arg in ["-fint-to-float", "-ftf"]:
+        floatize = True
 
-# Словари замен с учетом доступных версий
+# Словари замен
 scalar_replacements = {
     "sinf": f"Sleef_sinf{precision}",
     "cosf": f"Sleef_cosf{precision}",
@@ -113,8 +117,10 @@ scalar_replacements = {
     "logf": f"Sleef_logf{precision}",
     "expf": f"Sleef_expf{precision}",
     "powf": f"Sleef_powf{precision}",
-    "sin": f"Sleef_sin{precision}",  # Добавлено для double
-    "cos": f"Sleef_cos{precision}",  # Добавлено для double
+    "sin": f"Sleef_sin{precision}",
+    "cos": f"Sleef_cos{precision}",
+    "sqrt": f"Sleef_sqrt{precision}",
+    "acos": f"Sleef_acos{precision}",
 }
 
 vector_replacements = {
@@ -129,8 +135,10 @@ vector_replacements = {
     "logf": f"Sleef_logf4{precision}",
     "expf": f"Sleef_expf4{precision}",
     "powf": f"Sleef_powf4{precision}",
-    "sin": f"Sleef_sin2{precision}",  # Векторная версия для double (SSE2)
-    "cos": f"Sleef_cos2{precision}",  # Векторная версия для double (SSE2)
+    "sin": f"Sleef_sin2{precision}",
+    "cos": f"Sleef_cos2{precision}",
+    "sqrt": f"Sleef_sqrt2{precision}",
+    "acos": f"Sleef_acos2{precision}",
 }
 
 # Корректировка для _u3500
@@ -145,10 +153,14 @@ if precision == "_u3500":
     vector_replacements["sinf"] = "Sleef_fastsinf4_u3500"
     vector_replacements["cosf"] = "Sleef_fastcosf4_u3500"
     vector_replacements["powf"] = "Sleef_fastpowf4_u3500"
-    scalar_replacements["sin"] = "Sleef_sin_u35"  # Откат на _u35 для double
-    scalar_replacements["cos"] = "Sleef_cos_u35"  # Откат на _u35 для double
-    vector_replacements["sin"] = "Sleef_sin2_u35"  # Векторная версия для double
-    vector_replacements["cos"] = "Sleef_cos2_u35"  # Векторная версия для double
+    scalar_replacements["sin"] = "Sleef_sin_u35"
+    scalar_replacements["cos"] = "Sleef_cos_u35"
+    scalar_replacements["sqrt"] = "Sleef_sqrt_u35"
+    scalar_replacements["acos"] = "Sleef_acos_u35"
+    vector_replacements["sin"] = "Sleef_sin2_u35"
+    vector_replacements["cos"] = "Sleef_cos2_u35"
+    vector_replacements["sqrt"] = "Sleef_sqrt2_u35"
+    vector_replacements["acos"] = "Sleef_acos2_u35"
     for func in ["tanf", "asinf", "acosf", "atanf", "logf", "expf"]:
         scalar_replacements[func] = f"Sleef_{func}_u35"
         vector_replacements[func] = f"Sleef_{func}4_u35"
@@ -216,7 +228,16 @@ for file in sys.argv[1:]:
             new_lines.insert(sleef_idx + 1, "#include <emmintrin.h>\n")
             print(f"Added #include <emmintrin.h> to {file} for SSE2 support")
 
-    # Построчная обработка
+    # Преобразование double в float, если указана опция -fint-to-float или -ftf
+    if floatize:
+        for i, line in enumerate(new_lines):
+            new_line = line
+            for func in ["sin", "cos", "sqrt", "acos", "tan", "asin", "atan", "atan2", "log", "exp", "pow"]:
+                if not func.endswith("f") and re.search(r"\b" + func + r"\b", line):
+                    new_line = re.sub(r"\b" + func + r"\b", func + "f", new_line)
+            new_lines[i] = new_line
+
+    # Построчная обработка для SLEEF-замен
     for i, line in enumerate(new_lines):
         new_line = line
         for func in scalar_replacements:
