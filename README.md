@@ -18,7 +18,6 @@ A Python tool to automate replacing standard `math.h` functions with their high-
 
 *   Python 3.x
 *   SLEEF library (must be downloaded and built separately - see instructions below)
-*   `sed`, `grep`, `cp` commands (typically available on Linux/macOS)
 
 ## Installation
 
@@ -69,7 +68,6 @@ Replaces math functions in `my_file.c` with vector SLEEF functions at `_u10` pre
 
 ## Notes
 
-*   **Dependencies:** Make sure you have `sed`, `grep`, and `cp` installed on your system. These are standard utilities on most Linux/macOS systems.
 *   **Backup:** It is highly recommended to use the `-b` option to create backups of your files before running the script.
 *   **SSE2:** Vectorization (`-vec` or `-auto` with vector code) requires a processor with SSE2 support and proper SSE2 compilation flags (e.g., `-msse2` in GCC).
 *   **SLEEF Installation:** This tool assumes that you have already downloaded and built the SLEEF library.
