@@ -1,4 +1,3 @@
-```markdown
 # sleefuseful
 
 A Python tool to automate replacing standard `math.h` functions with their high-performance SLEEF (SIMD Library for Evaluating Elementary Functions) equivalents in C code.
@@ -99,4 +98,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-```
