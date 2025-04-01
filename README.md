@@ -23,7 +23,7 @@ A Python tool to automate replacing standard `math.h` functions with their high-
 ## Installation
 
 1.  **Install Python 3:** Make sure you have Python 3 installed on your system.
-2.  **Download SLEEF:** Download the SLEEF library from [https://sleef.org/](https://sleef.org/) or its GitHub repository: [https://github.com/sleef/sleef](https://github.com/sleef/sleef).
+2.  **Download SLEEF:** Download the SLEEF library from [https://sleef.org/](https://sleef.org/) or its GitHub repository: [https://github.com/shibatch/sleef](https://github.com/shibatch/sleef).
 3.  **Build SLEEF:** Follow the SLEEF build instructions. Common command for building SLEEF are:
     ```bash
     mkdir build
