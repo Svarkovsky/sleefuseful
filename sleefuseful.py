@@ -113,6 +113,8 @@ scalar_replacements = {
     "logf": f"Sleef_logf{precision}",
     "expf": f"Sleef_expf{precision}",
     "powf": f"Sleef_powf{precision}",
+    "sin": f"Sleef_sin{precision}",  # Добавлено для double
+    "cos": f"Sleef_cos{precision}",  # Добавлено для double
 }
 
 vector_replacements = {
@@ -127,6 +129,8 @@ vector_replacements = {
     "logf": f"Sleef_logf4{precision}",
     "expf": f"Sleef_expf4{precision}",
     "powf": f"Sleef_powf4{precision}",
+    "sin": f"Sleef_sin2{precision}",  # Векторная версия для double (SSE2)
+    "cos": f"Sleef_cos2{precision}",  # Векторная версия для double (SSE2)
 }
 
 # Корректировка для _u3500
@@ -141,6 +145,10 @@ if precision == "_u3500":
     vector_replacements["sinf"] = "Sleef_fastsinf4_u3500"
     vector_replacements["cosf"] = "Sleef_fastcosf4_u3500"
     vector_replacements["powf"] = "Sleef_fastpowf4_u3500"
+    scalar_replacements["sin"] = "Sleef_sin_u35"  # Откат на _u35 для double
+    scalar_replacements["cos"] = "Sleef_cos_u35"  # Откат на _u35 для double
+    vector_replacements["sin"] = "Sleef_sin2_u35"  # Векторная версия для double
+    vector_replacements["cos"] = "Sleef_cos2_u35"  # Векторная версия для double
     for func in ["tanf", "asinf", "acosf", "atanf", "logf", "expf"]:
         scalar_replacements[func] = f"Sleef_{func}_u35"
         vector_replacements[func] = f"Sleef_{func}4_u35"
@@ -151,9 +159,9 @@ if precision == "_u3500":
 
 # Корректировка для _u05
 if precision == "_u05":
-    for func in ["tanf", "asinf", "acosf", "atanf", "atan2f", "logf", "expf", "powf"]:
+    for func in ["tanf", "asinf", "acosf", "atanf", "atan2f", "logf", "expf", "powf", "sin", "cos"]:
         scalar_replacements[func] = f"Sleef_{func}_u10"
-        vector_replacements[func] = f"Sleef_{func}4_u10"
+        vector_replacements[func] = f"Sleef_{func}4_u10" if func.endswith("f") else f"Sleef_{func}2_u10"
 
 # Корректировка для _u10
 if precision == "_u10":
